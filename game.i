@@ -915,8 +915,8 @@ typedef struct {
  int width;
  int height;
  int active;
- int aniState;
- int aniCounter;
+ int state;
+ int counter;
  int curFrame;
  int numFrames;
  int bulletTimer;
@@ -1162,19 +1162,21 @@ void updatePlayer() {
 void initEnemies() {
 
  int row = 0;
- int aniState = 0;
+ int state = 0;
+
 
  for (int i = 0; i < 25; i++) {
+
 
   if (i % 5 == 0) {
 
    enemies[i].col = 10;
    row += 18;
 
-   if (aniState < 4) {
-    aniState += 2;
+   if (state < 4) {
+    state += 2;
    } else {
-    aniState = 0;
+    state = 0;
    }
 
   } else {
@@ -1187,8 +1189,8 @@ void initEnemies() {
   enemies[i].width = 14;
   enemies[i].height = 14;
   enemies[i].active = 1;
-  enemies[i].aniState = aniState;
-  enemies[i].aniCounter = 0;
+  enemies[i].state = state;
+  enemies[i].counter = 0;
   enemies[i].curFrame = 0;
   enemies[i].numFrames = 2;
   enemies[i].bulletTimer = 0;
@@ -1203,7 +1205,7 @@ void drawEnemy(ENEMY* e, int index) {
 
   shadowOAM[index].attr0 = e->row | (0<<13) | (0<<14);
   shadowOAM[index].attr1 = e->col | (1<<14);
-  shadowOAM[index].attr2 = ((0)<<12) | ((e->curFrame * 2 + 2)*32+(e->aniState));
+  shadowOAM[index].attr2 = ((0)<<12) | ((e->curFrame * 2 + 2)*32+(e->state));
 
  } else {
 
@@ -1216,27 +1218,55 @@ void drawEnemy(ENEMY* e, int index) {
 void updateEnemy(ENEMY* e) {
 
 
- if (e->aniCounter % 20 == 0) {
+ if (e->counter % 20 == 0) {
+
+
   if (e->curFrame < e->numFrames - 1) {
    e->curFrame++;
   } else {
    e->curFrame = 0;
   }
  }
- e->aniCounter++;
+ e->counter++;
 
 
- if ((e->col == 240 - e->width) & (e->cdel == -1)) {
-  e->cdel *= -1;
-  e->row += 7;
+ if (((e[0].col >= 240 - e->width) && (e[0].cdel == -1) && (e[0].active == 1)) ||
+  ((e[1].col >= 240 - e->width) && (e[1].cdel == -1) && (e[1].active == 1)) ||
+  ((e[2].col >= 240 - e->width) && (e[2].cdel == -1) && (e[2].active == 1)) ||
+  ((e[3].col >= 240 - e->width) && (e[3].cdel == -1) && (e[3].active == 1)) ||
+  ((e[4].col >= 240 - e->width) && (e[4].cdel == -1) && (e[4].active == 1))) {
 
- } else if ((e->col == 0) & (e->cdel == 1)) {
-  e->cdel *= -1;
-  e->row += 7;
+  for (int i = 0; i < 25; i++) {
 
- } else if (e->active == 1 && e->row > 146) {
-  goToLose();
+
+   enemies[i].cdel *= -1;
+
+   enemies[i].row += 5;
+  }
  }
+
+
+ if (((e[0].col <= 1) && (e[0].cdel == 1) && (e[0].active == 1)) ||
+  ((e[1].col <= 0) && (e[1].cdel == 1) && (e[1].active == 1)) ||
+  ((e[2].col <= 0) && (e[2].cdel == 1) && (e[2].active == 1)) ||
+  ((e[3].col <= 0) && (e[3].cdel == 1) && (e[3].active == 1)) ||
+  ((e[4].col <= 0) && (e[4].cdel == 1) && (e[4].active == 1))) {
+
+  for (int i = 0; i < 25; i++) {
+
+
+   enemies[i].cdel *= -1;
+
+   enemies[i].row += 5;
+  }
+ }
+
+
+ if (e->active == 1 && e->row > 146) {
+  livesRemaining = -1;
+ }
+
+
  e->col -= e->cdel;
 
 

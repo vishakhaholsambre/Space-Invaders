@@ -65,7 +65,7 @@ void updateGame() {
 		if (enemies[i].col < 1 || enemies[i].col + enemies[i].width > SCREENWIDTH - 1) {
 			move = 1;
 	 	}
-		updateEnemy(&enemies[i]);
+		updateEnemy(&enemies[i]); 
 	}
 
 	for (int i = 0; i < BULLETCOUNT; i++){
@@ -153,19 +153,21 @@ void updatePlayer() {
 void initEnemies() {
 
 	int row = 0;
-	int aniState = 0;
+	int state = 0;
 
+	// Determine rows and arrangement for enemies
 	for (int i = 0; i < ENEMYCOUNT; i++) {
 		
+		// Check each row
 		if (i % 5 == 0) {
 
 			enemies[i].col = 10;
 			row += 18;
 	
-			if (aniState < 4) {
-				aniState += 2;
+			if (state < 4) {
+				state += 2;
 			} else {
-				aniState = 0;
+				state = 0;
 			}
 
 		} else {
@@ -178,8 +180,8 @@ void initEnemies() {
 		enemies[i].width = 14;
 		enemies[i].height = 14;
 		enemies[i].active = 1;
-		enemies[i].aniState = aniState;
-		enemies[i].aniCounter = 0;
+		enemies[i].state = state;
+		enemies[i].counter = 0;
 		enemies[i].curFrame = 0;
 		enemies[i].numFrames = 2;
 		enemies[i].bulletTimer = 0;
@@ -194,7 +196,7 @@ void drawEnemy(ENEMY* e, int index) {
 		// Retrieve enemy sprite from spritesheet
 		shadowOAM[index].attr0 = e->row | ATTR0_4BPP | ATTR0_SQUARE;
 		shadowOAM[index].attr1 = e->col | ATTR1_SMALL;
-		shadowOAM[index].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(e->curFrame * 2 + 2, e->aniState);
+		shadowOAM[index].attr2 = ATTR2_PALROW(0) | ATTR2_TILEID(e->curFrame * 2 + 2, e->state);
 
 	} else {
 
@@ -207,27 +209,55 @@ void drawEnemy(ENEMY* e, int index) {
 void updateEnemy(ENEMY* e) {
 
 	// Move enemy every 20 frames
-	if (e->aniCounter % 20 == 0) {
+	if (e->counter % 20 == 0) {
+
+		// Sets animation of enemy
 		if (e->curFrame < e->numFrames - 1) {
 			e->curFrame++;
 		} else {
 			e->curFrame = 0;
 		}
 	}
-	e->aniCounter++;
+	e->counter++;
 
 	// Switch movement direction if right wall hit
-	if ((e->col == 240 - e->width) & (e->cdel == -1)) {
-		e->cdel *= -1;
-		e->row += 7;
+	if (((e[0].col >= 240 - e->width) && (e[0].cdel == -1) && (e[0].active == 1)) || 
+		((e[1].col >= 240 - e->width) && (e[1].cdel == -1) && (e[1].active == 1)) ||
+		((e[2].col >= 240 - e->width) && (e[2].cdel == -1) && (e[2].active == 1)) ||
+		((e[3].col >= 240 - e->width) && (e[3].cdel == -1) && (e[3].active == 1)) ||
+		((e[4].col >= 240 - e->width) && (e[4].cdel == -1) && (e[4].active == 1))) {
+
+		for (int i = 0; i < ENEMYCOUNT; i++) {
+
+			// Change direction of every alien column or block
+			enemies[i].cdel *= -1;
+			// Move alien block downwards towards player
+			enemies[i].row += 5;
+		}
+	} 
+
 	// Switch movement direction if left wall hit
-	} else if ((e->col == 0) & (e->cdel == 1)) {
-		e->cdel *= -1;
-		e->row += 7;
+	if (((e[0].col <= 1) && (e[0].cdel == 1) && (e[0].active == 1)) ||
+		((e[1].col <= 0) && (e[1].cdel == 1) && (e[1].active == 1)) ||
+		((e[2].col <= 0) && (e[2].cdel == 1) && (e[2].active == 1)) ||
+		((e[3].col <= 0) && (e[3].cdel == 1) && (e[3].active == 1)) ||
+		((e[4].col <= 0) && (e[4].cdel == 1) && (e[4].active == 1))) {
+
+		for (int i = 0; i < ENEMYCOUNT; i++) {
+
+			// Change direction of every alien column or block
+			enemies[i].cdel *= -1;
+			// Move alien block downwards towards player
+			enemies[i].row += 5;
+		}
+	} 
+
 	// Automatic loss if enemies get too close to the player
-	} else if (e->active == 1 && e->row > 146) {
-		goToLose();
+	if (e->active == 1 && e->row > 146) {
+		livesRemaining = -1;
 	}
+
+	// Movement of enemies to left or right walls
 	e->col -= e->cdel;
 
 	// Check for collision of enemy with player bullets

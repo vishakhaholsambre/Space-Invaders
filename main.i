@@ -819,8 +819,8 @@ typedef struct {
  int width;
  int height;
  int active;
- int aniState;
- int aniCounter;
+ int state;
+ int counter;
  int curFrame;
  int numFrames;
  int bulletTimer;
